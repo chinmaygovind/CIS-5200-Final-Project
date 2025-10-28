@@ -1,0 +1,181 @@
+\documentclass[english]{article}
+\usepackage[latin9]{inputenc}
+\usepackage[letterpaper]{geometry}
+% math packages for \text, \operatorname, \underset, etc.
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+
+\begin{document}
+
+%*********** Use this for project proposal ************
+\begin{center}
+    \textbf{\Large CIS 5200 Fall 2025, Project Proposal}
+\end{center}
+
+%*********** Use this for project checkpoint ************
+% \begin{center}
+%     \textbf{\Large CIS 5200 Fall 2025, Project Checkpoint}
+% \end{center}
+
+%*********** Use this for project report ************
+% \begin{center}
+%     \textbf{\Large CIS 5200 Fall 2025, Project Report}
+% \end{center}
+
+\vspace{15pt}
+
+
+%*********** Use this header for project checkpoint, feel free to modify for final report ************
+
+%Fill in your project title
+\textbf{\Large{Project Title: Modeling Formula One Tire Degradation}} 
+
+\vspace{1cm}
+
+\textbf{Team Name: B2B Haas}
+
+\vspace{5mm}
+
+\textbf{Group Members:}
+
+%Fill in your team details; remove any lines that are not needed
+\begin{itemize}
+ \item Chinmay Govind; Email: \texttt{cgovind@seas.upenn.edu}
+ \item Roberto Tamez; Email: \texttt{robtamez@seas.upenn.edu}
+ \item Rishabh Mallela; Email: \texttt{rmallela@seas.upenn.edu}
+\end{itemize}
+
+\vspace{8pt}
+
+
+
+\vspace{1cm}
+
+% horizontal rule (\hline is only valid inside tabular/array environments)
+\noindent\rule{\textwidth}{0.4pt}
+
+%*********** Use this to include abstract in project report (comment out in project proposal) ************
+
+%\begin{abstract}
+%Abstract for project report goes here.
+%\end{abstract}
+
+%*********** Recommended section structure for project proposal below (comment out in project report and checkpoint) ************
+
+\section{Motivation}
+Formula 1 (F1) race strategy is critically dependent on managing \textbf{tire degradation}, the phenomenon where a tire's performance (lap time) declines with use and heat. An accurate prediction of this degradation rate is the key to optimizing pit stop timing and tire compound selection. This project seeks to develop a robust machine learning model to accurately forecast a tire's expected performance loss over a race stint, thus aiding race strategists in maximizing overall race pace and minimizing time lost in the pits. This is a complex, non-linear prediction problem that is highly valuable in professional motorsport.
+
+\section{Dataset}
+The project will use official F1 timing and telemetry data, sourced via the \textbf{FastF1 Python library}. We will collect data from multiple Grand Prix events across the 2020-2024 seasons (e.g., at least 15 races) to ensure model generalizability.
+
+\begin{itemize}
+    \item \textbf{Link}: \url{https://github.com/theOehrly/Fast-F1}\\ (Data is accessed programmatically using this open-source library, drawing from the official F1 timing feed.)
+    \item \textbf{n (Number of Samples)}: Approximately $n \approx 15,000 - 20,000$ individual laps (instances).
+    \item \textbf{p (Number of Features)}: Approximately $p \approx 10-15$ features, including:
+    \begin{itemize}
+        \item \textbf{Tire-Specific}: Tire Compound (Soft, Medium, Hard), Stint Lap Number (Tire Age).
+        \item \textbf{Car/Driver}: Brake percentage, Throttle percentage, Gear, Fuel Load (or correction factor).
+        \item \textbf{Environmental/Track}: Track Temperature, Air Temperature, Track Conditions, Track ID, Lap Number.
+    \end{itemize}
+\end{itemize}
+\section{Related Work}
+Traditional F1 simulation relies on complex physics-based models, such as the Pacejka Magic Formula, which is often difficult to calibrate. Machine learning models, however, have shown significant promise. In \textquotedblleft Predicting F1 Lap Times: A Comparison of ML Models\textquotedblright, the author demonstrated that ensemble methods like \textbf{Random Forest} and \textbf{XGBoost} can predict fuel-corrected lap times with high accuracy, outperforming simple linear models \cite{f1laptimes}. Furthermore, deep learning, specifically \textbf{LSTM Neural Networks}, is used by professional teams to forecast performance. For example, research utilizing the \textbf{Mercedes-AMG PETRONAS F1 team's historic data} applied LSTMs to forecast granular data like "tyre energy," which is critical for determining optimal pit stop windows and maximizing race pace \cite{tyreenergy}. This shows the strong applicability of time-series models for capturing sequential dependencies in degradation.
+
+\section{Problem Formulation}
+The project will be framed as a \textbf{Machine Learning Regression Problem}.
+
+\begin{itemize}
+    \item \textbf{Goal}: Predict the performance of a tire over its lifespan.
+    \item \textbf{Target Variable ($y$)}: The \textbf{Fuel-Corrected Lap Time} (in seconds) for a given lap. This is the raw lap time adjusted to remove the effect of decreasing fuel load, thus isolating the performance loss due to tire wear.
+    \item \textbf{Input Variables ($X$)}: The set of environmental, tire, and telemetry features described in the Data Set section.
+    \item \textbf{Degradation Rate}: The degradation rate (in seconds per lap) will be derived from the model's output by calculating the slope ($\frac{\Delta y}{\Delta \text{Stint Lap Number}}$) across a stint.
+\end{itemize}
+
+
+\section{Methods}
+We will compare four methods, utilizing techniques covered in class, to select the most robust and accurate predictor of tire degradation.
+
+\begin{itemize}
+    \item \textbf{Method 1: Baseline Model (Linear Regression with $\mathbf{L_2}$ Regularization)}.
+    \begin{itemize}
+        \item \textbf{Source}: Based on course notes covering linear and ridge regression.
+        \item \textbf{Description}: We will use a basic linear model penalized with an $L_2$ norm (Ridge) to reduce overfitting given the number of features. This model serves as a straightforward baseline and will be trained to minimize mean squared error (MSE).
+        $$ \hat{w} = \underset{w}{\operatorname{argmin}} ||y - \mathbf{X}w||_2^2 + \lambda ||w||_2^2 $$
+    \end{itemize}
+
+    \item \textbf{Method 2: Non-linear Regression with Basis Functions (RBF Network)}.
+    \begin{itemize}
+        \item \textbf{Source}: Based on course notes covering radial basis functions and generalized linear models.
+        \item \textbf{Description}: To capture non-linear degradation (for example, an initial performance drop followed by stabilization), we will transform the input features $\mathbf{x}$ using RBF basis functions $\phi(\mathbf{x})$, with centers obtained via K-means clustering. This maps the problem into a higher-dimensional space where a linear model can be applied.
+        $$ \hat{y}(\mathbf{x}) = \sum_{j=1}^{d} w_j \phi_j(\mathbf{x}) $$
+    \end{itemize}
+
+    \item \textbf{Method 3: Complex Ensemble Model (Gradient Tree Boosting, GTB)}.
+    \begin{itemize}
+        \item \textbf{Source}: Based on course material about ensembles and gradient boosting.
+        \item \textbf{Description}: GTB constructs a strong model stagewise by fitting a sequence of weak learners (fixed-depth regression trees) to the residuals of earlier models. This approach handles complex, non-linear feature interactions well. We will tune hyperparameters such as the learning rate $\eta$ and tree depth $d$ using cross-validation.
+    \end{itemize}
+
+    \item \textbf{Method 4: Kernel Regression (Inductive Bias Model)}.
+    \begin{itemize}
+        \item \textbf{Source}: Based on course notes on kernels and kernel regression.
+        \item \textbf{Description}: This method encodes the inductive bias that nearby laps in feature space tend to have similar lap times. We will use a kernel function, such as the Gaussian kernel $k(\mathbf{x}_i, \mathbf{x}_j)$, to weight nearby training points and produce a locally weighted prediction for $\hat{y}$.
+        $$ k(\mathbf{x}_i, \mathbf{x}_j) = \exp \left( -||\mathbf{x}_i - \mathbf{x}_j||^2 / \sigma^2 \right) $$
+    \end{itemize}
+\end{itemize}
+
+\section{Evaluation}
+The project's goal is to accurately predict the continuous, real-valued target variable: \textbf{Fuel-Corrected Lap Time} (a proxy for tire degradation). As this is a regression problem, the evaluation will follow the principles of error analysis and validation covered in the course. We will use the following strategies:
+\begin{itemize}
+    \item \textbf{Mean Squared Error (MSE)}: This will be the primary metric for model selection, as it penalizes larger errors more heavily, which is critical in race strategy.
+    \item \textbf{Cross validation}: We will use \textbf{k-fold cross-validation} (with $k=5$) to ensure that our models generalize well to unseen data and to prevent overfitting.
+\end{itemize}
+We will compare the four methods based on their MSE on a held-out test set, selecting the model with the lowest error for final deployment. Additionally, we will analyze feature importance and prediction plots to qualitatively assess model performance. When the project is finished, for fun we will try to predict the lap times of the final races of the 2025 season and see how close we get!
+
+\newpage
+\section{Project Plan}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{0.08\linewidth}|p{0.12\linewidth}|p{0.78\linewidth}|}
+\hline
+	\textbf{Week} & \textbf{Phase} & \textbf{Key Tasks and Deliverables (Assigned)} \\
+\hline
+Weeks 1--2 \\ (Oct 27 -- Nov 9, 2025) & \textbf{Data \& Baseline} & $\bullet$ Data Acquisition, Cleaning, and Feature Engineering (One-hot encoding, etc.) -- Roberto. \\
+& & $\bullet$ Implement \textbf{Method 1 (Ridge Regression)} baseline -- Chinmay. \\
+& & $\bullet$ Establish the independent \textbf{Test Set} for final evaluation -- Rishabh. \\
+\hline
+Weeks 3--4 \\ (Nov 10 -- Nov 23, 2025) & \textbf{Core Models} & $\bullet$ Implement \textbf{Method 2 (RBF Network)}: select kernel centers (e.g., K-Means) -- Rishabh. \\
+& & $\bullet$ Implement \textbf{Method 3 (Gradient Tree Boosting)} model structure -- Roberto. \\
+& & $\bullet$ Start preliminary cross-validation for hyperparameter ranges -- Chinmay. \\
+\hline
+Weeks 5--6 \\ (Nov 24 -- Dec 7, 2025) & \textbf{Novel Model \& Tuning} & $\bullet$ Implement \textbf{Method 4 (Kernel Regression)} -- Chinmay. \\
+& & $\bullet$ Conduct systematic \textbf{K-Fold Cross-Validation} for all four models to find optimal hyperparameters ($\lambda, \sigma, \eta$, etc.) -- Rishabh. \\
+& & $\bullet$ Prepare final, optimized model weights -- Roberto. \\
+\hline
+Weeks 7--8 \\ (Dec 8 -- Dec 21, 2025) & \textbf{Evaluation \& Report} & $\bullet$ Run all four final models on the \textbf{Test Set} and generate the results table (MSE, RMSE, MAE) -- Chinmay. \\
+& & $\bullet$ Finalize the Evaluation section and qualitative analysis (feature importance, prediction plots) -- Roberto. \\
+& & $\bullet$ Complete the final report and prepare the 10-minute presentation -- Rishabh. \\
+\hline
+\end{tabular}
+\end{table}
+
+
+%============================= BIBLIOGRAPHY ===============================
+\newpage
+\bibliographystyle{plain}
+\bibliography{project}
+\begin{thebibliography}{9}
+
+\bibitem{f1laptimes}
+T.~Babbar, \emph{Predicting F1 Lap Times: A Comparison of ML Models}, Medium, 2024.
+Available online: \url{https://medium.com/@tapanbabbar/predicting-f1-lap-times-a-comparison-of-ml-models-275ac8a06e17}.
+
+\bibitem{tyreenergy}
+T.~W. V.~Y. Cheung, P.~Bonnans, V.~Vasilakis, and G.~Zajko, \emph{Explainable Time Series Prediction of Tyre Energy in Formula One Race Strategy}, arXiv:2501.04067, 2025.
+Available online: \url{https://arxiv.org/abs/2501.04067}.
+
+\end{thebibliography}
+\end{document}
+
