@@ -75,19 +75,19 @@ The project will use official F1 timing and telemetry data, sourced via the \tex
     \item \textbf{p (Number of Features)}: Approximately $p \approx 10-15$ features, including:
     \begin{itemize}
         \item \textbf{Tire-Specific}: Tire Compound (Soft, Medium, Hard), Stint Lap Number (Tire Age).
-        \item \textbf{Car/Driver}: Brake percentage, Throttle percentage, Gear, Fuel Load (or correction factor).
+        \item \textbf{Car/Driver}: Brake percentage, Throttle percentage, Gear, Driver ID.
         \item \textbf{Environmental/Track}: Track Temperature, Air Temperature, Track Conditions, Track ID, Lap Number.
     \end{itemize}
 \end{itemize}
 \section{Related Work}
-Traditional F1 simulation relies on complex physics-based models, such as the Pacejka Magic Formula, which is often difficult to calibrate. Machine learning models, however, have shown significant promise. In \textquotedblleft Predicting F1 Lap Times: A Comparison of ML Models\textquotedblright, the author demonstrated that ensemble methods like \textbf{Random Forest} and \textbf{XGBoost} can predict fuel-corrected lap times with high accuracy, outperforming simple linear models \cite{f1laptimes}. Furthermore, deep learning, specifically \textbf{LSTM Neural Networks}, is used by professional teams to forecast performance. For example, research utilizing the \textbf{Mercedes-AMG PETRONAS F1 team's historic data} applied LSTMs to forecast granular data like "tyre energy," which is critical for determining optimal pit stop windows and maximizing race pace \cite{tyreenergy}. This shows the strong applicability of time-series models for capturing sequential dependencies in degradation.
+Traditional F1 simulation relies on complex physics-based models, such as the Pacejka Magic Formula, which is often difficult to calibrate. Machine learning models, however, have shown significant promise. In \textquotedblleft Predicting F1 Lap Times: A Comparison of ML Models\textquotedblright, the author demonstrated that ensemble methods like \textbf{Random Forest} and \textbf{XGBoost} can predict lap times with high accuracy, outperforming simple linear models \cite{f1laptimes}. Furthermore, deep learning, specifically \textbf{LSTM Neural Networks}, is used by professional teams to forecast performance. For example, research utilizing the \textbf{Mercedes-AMG PETRONAS F1 team's historic data} applied LSTMs to forecast granular data like "tyre energy," which is critical for determining optimal pit stop windows and maximizing race pace \cite{tyreenergy}. This shows the strong applicability of time-series models for capturing sequential dependencies in degradation.
 
 \section{Problem Formulation}
 The project will be framed as a \textbf{Machine Learning Regression Problem}.
 
 \begin{itemize}
     \item \textbf{Goal}: Predict the performance of a tire over its lifespan.
-    \item \textbf{Target Variable ($y$)}: The \textbf{Fuel-Corrected Lap Time} (in seconds) for a given lap. This is the raw lap time adjusted to remove the effect of decreasing fuel load, thus isolating the performance loss due to tire wear.
+    \item \textbf{Target Variable ($y$)}: The \textbf{Lap Time} (in seconds) for a given lap. 
     \item \textbf{Input Variables ($X$)}: The set of environmental, tire, and telemetry features described in the Data Set section.
     \item \textbf{Degradation Rate}: The degradation rate (in seconds per lap) will be derived from the model's output by calculating the slope ($\frac{\Delta y}{\Delta \text{Stint Lap Number}}$) across a stint.
 \end{itemize}
@@ -126,7 +126,7 @@ We will compare four methods, utilizing techniques covered in class, to select t
 \end{itemize}
 
 \section{Evaluation}
-The project's goal is to accurately predict the continuous, real-valued target variable: \textbf{Fuel-Corrected Lap Time} (a proxy for tire degradation). As this is a regression problem, the evaluation will follow the principles of error analysis and validation covered in the course. We will use the following strategies:
+The project's goal is to accurately predict the continuous, real-valued target variable: \textbf{Lap Time} (a proxy for tire degradation). As this is a regression problem, the evaluation will follow the principles of error analysis and validation covered in the course. We will use the following strategies:
 \begin{itemize}
     \item \textbf{Mean Squared Error (MSE)}: This will be the primary metric for model selection, as it penalizes larger errors more heavily, which is critical in race strategy.
     \item \textbf{Cross validation}: We will use \textbf{k-fold cross-validation} (with $k=5$) to ensure that our models generalize well to unseen data and to prevent overfitting.
